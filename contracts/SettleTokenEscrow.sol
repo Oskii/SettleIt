@@ -101,7 +101,7 @@ contract SettleTokenEscrow is AccessControl
         */
 
         fee_receiver = _fee_receiver;
-           
+
     }
 
     /*
@@ -198,7 +198,6 @@ contract SettleTokenEscrow is AccessControl
         //Now release and refund become possible
         _escrow.funds_deposited = true;
 
-
         emit Funded(_escrow_id, _escrow.token, _escrow.amount);
     }
 
@@ -236,7 +235,6 @@ contract SettleTokenEscrow is AccessControl
         //Set escrow amount to zero. We have already negated reentracy, so the fact that this happens after the send is not a problem
         _escrow.amount = 0; 
         
-        //Burn Refunded Event into blockchain
     }
 
     /*
