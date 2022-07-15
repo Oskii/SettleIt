@@ -29,7 +29,7 @@ contract SettleTokenEscrow is AccessControl
     *   Specify refund and release types and standardize them into bytes32 hex arrays
     *   This is so we can easily parse them using bytes32 and have other standardized actions in the future maybe
     */
-    
+
     bytes32 public constant REFUND = keccak256("refund");
     bytes32 public constant RELEASE = keccak256("release");
 
@@ -112,6 +112,8 @@ contract SettleTokenEscrow is AccessControl
         */
 
         fee_receiver = _fee_receiver;
+
+        fee = _fee;
 
     }
 

@@ -114,6 +114,8 @@ contract SettleTokenSettlement is AccessControl
 
         fee_receiver = _fee_receiver;
 
+        fee = _fee;
+
     }
 
     /*
