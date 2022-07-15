@@ -139,7 +139,7 @@ contract SettleTokenSettlement is AccessControl
         /*
         *   You shouldn't be able to settlement 0 Tokens.
         */
-        require(_amount > 0, "Settle It: Caller is not the releaser of this settlement.");
+        require(_amount > 0, "Settle It: Settlement amount must be greater than 0.");
         
         /*
         *   You shouldn't be able to settlement 0.000000000000000001 tokens and negate the contract's fee.
