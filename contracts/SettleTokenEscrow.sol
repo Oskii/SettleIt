@@ -91,9 +91,12 @@ contract SettleTokenEscrow is AccessControl
 
         /*
         *   Give the deployer of this contract ADMIN permissions so that, should a vulnerability be found, they
-        *   are able to quickly pause the contract and stop any releasing of funds
+        *   are able to quickly pause the contract and stop any releasing of funds. Must invoke DEFAULT_ADMIN_ROLE first
+        *   as per the specification of AccessControl
         */
-
+        
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        
         grantRole("ADMIN", msg.sender); 
 
         /*
