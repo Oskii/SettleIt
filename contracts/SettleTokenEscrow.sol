@@ -26,6 +26,14 @@ contract SettleTokenEscrow is AccessControl
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
 
     /*
+    *   Specify refund and release types and standardize them into bytes32 hex arrays
+    *   This is so we can easily parse them using bytes32 and have other standardized actions in the future maybe
+    */
+    
+    bytes32 public constant REFUND = keccak256("refund");
+    bytes32 public constant RELEASE = keccak256("release");
+
+    /*
     *   I wanted to demonstrate some mitigating factors in this contract. So let's enable a flag that will specify the contract
     *   to be paused and unpaused at any time, just in case there was a vulnerability found in the future! Of course, only the contract
     *   owner should be able to do this! Hence, AccessControl.sol has been inherited, so that we can do this in the recommended way.
@@ -61,7 +69,7 @@ contract SettleTokenEscrow is AccessControl
         uint256 amount;         //Amount of the token
         IERC20 token;           //Which token is being used in the escrow
         uint256 expiry_block;   //The block at which the escrow can be finalised manually
-        bytes32 expiry_action;  //The action which is taken if the escrow expires "release" or "refund".
+        bytes32 expiry_action;  //The action which is taken if the escrow expires RELEASE or REFUND.
     }
 
     /*
@@ -96,7 +104,7 @@ contract SettleTokenEscrow is AccessControl
         */
         
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        
+
         grantRole("ADMIN", msg.sender); 
 
         /*
@@ -123,7 +131,7 @@ contract SettleTokenEscrow is AccessControl
         *   Escrows that expire must take specific action with the funds
         */
 
-        require(_expiry_block == 0 || _expiry_action == "release" || _expiry_action == "refund", "SettleEscrow: Expired escrows must take specific action (refund or release) with the funds");
+        require(_expiry_block == 0 || _expiry_action == RELEASE || _expiry_action == REFUND, "SettleEscrow: Expired escrows must take specific action (refund or release) with the funds");
 
         /*
         *   You shouldn't be able to escrow 0 Tokens.
@@ -253,7 +261,7 @@ contract SettleTokenEscrow is AccessControl
         require(block.number >= _escrow.expiry_block && _escrow.expiry_block != 0, "SettleEscrow: This escrow has not yet expired.");
 
         //We can call the same external release function here if the action on expiry is to release the funds
-        if(_escrow.expiry_action == "release")
+        if(_escrow.expiry_action == RELEASE)
         {
             require(_escrow.funds_deposited == true, "SettleEscrow: Escrow must be funded to be refunded.");    //The escrow must have had the funds deposited before it can be refunded
             require(_escrow.released == false, "SettleEscrow: Escrow is already released."); //I like to avoid shorthand here for readability. On a compiler level, I believe it ends up the same
@@ -262,7 +270,7 @@ contract SettleTokenEscrow is AccessControl
         }
 
         //We can call the same external refund function if the action on expiry is to refund the funds
-        else if(_escrow.expiry_action == "refund")
+        else if(_escrow.expiry_action == REFUND)
         {
             require(_escrow.funds_deposited == true, "SettleEscrow: Escrow must be funded to be refunded.");    //The escrow must have had the funds deposited before it can be refunded
             require(_escrow.released == false, "SettleEscrow: Escrow is already released."); //I like to avoid shorthand here for readability. On a compiler level, I believe it ends up the same

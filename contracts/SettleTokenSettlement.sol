@@ -24,6 +24,15 @@ contract SettleTokenSettlement is AccessControl
     */
 
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
+    
+    /*
+    *   Specify refund and release types and standardize them into bytes32 hex arrays
+    *   This is so we can easily parse them using bytes32 and have other standardized actions in the future maybe
+    */
+    
+    bytes32 public constant REFUND = keccak256("refund");
+    bytes32 public constant RELEASE = keccak256("release");
+    
 
     /*
     *   I wanted to demonstrate some mitigating factors in this contract. So let's enable a flag that will specify the contract
@@ -61,7 +70,7 @@ contract SettleTokenSettlement is AccessControl
         uint256 amount;         //Amount of the token
         IERC20 token;           //Which token is being used in the settlement
         uint256 expiry_block;   //The block at which the settlement can be finalised manually
-        bytes32 expiry_action;  //The action which is taken if the settlement expires "release" or "refund".
+        bytes32 expiry_action;  //The action which is taken if the settlement expires keccak256("release") or keccak256("refund").
     }
 
     /*
@@ -123,7 +132,7 @@ contract SettleTokenSettlement is AccessControl
         *   Settlements that expire must take specific action with the funds
         */
 
-        require(_expiry_block == 0 || _expiry_action == "release" || _expiry_action == "refund", "Settle It: Expired settlements must take specific action (refund or release) with the funds");
+        require(_expiry_block == 0 || _expiry_action == RELEASE || _expiry_action == REFUND, "Settle It: Expired settlements must take specific action (refund or release) with the funds");
 
         /*
         *   You shouldn't be able to settlement 0 Tokens.
@@ -253,7 +262,7 @@ contract SettleTokenSettlement is AccessControl
         require(block.number >= _settlement.expiry_block && _settlement.expiry_block != 0, "Settle It: This settlement has not yet expired.");
 
         //We can call the same external release function here if the action on expiry is to release the funds
-        if(_settlement.expiry_action == "release")
+        if(_settlement.expiry_action == RELEASE)
         {
             require(_settlement.funds_deposited == true, "Settle It: Settlement must be funded to be refunded.");    //The settlement must have had the funds deposited before it can be refunded
             require(_settlement.released == false, "Settle It: Settlement is already released."); //I like to avoid shorthand here for readability. On a compiler level, I believe it ends up the same
@@ -262,7 +271,7 @@ contract SettleTokenSettlement is AccessControl
         }
 
         //We can call the same external refund function if the action on expiry is to refund the funds
-        else if(_settlement.expiry_action == "refund")
+        else if(_settlement.expiry_action == REFUND)
         {
             require(_settlement.funds_deposited == true, "Settle It: Settlement must be funded to be refunded.");    //The settlement must have had the funds deposited before it can be refunded
             require(_settlement.released == false, "Settle It: Settlement is already released."); //I like to avoid shorthand here for readability. On a compiler level, I believe it ends up the same
