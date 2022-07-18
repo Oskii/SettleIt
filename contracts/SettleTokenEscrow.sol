@@ -300,4 +300,20 @@ contract SettleTokenEscrow is AccessControl
         emergency_pause = !emergency_pause;
     }
 
+    /*
+    *   As of Solidity 0.8.0 we can directly return structs without having to use the experimental 
+    *   encoding feature of "pragma experimental ABIEncoderV2;", so we can pull all the escrows
+    *   down to our web3js front end and display them based on the connected wallet's involvement
+    */
+
+    function get_escrow (uint256 index) public view returns (Settlement memory)
+    {
+        return settlements[index];
+    }
+
+    function get_num_escrows() public view returns (uint256)
+    {
+        return settlements.length;
+    }
+
 }
