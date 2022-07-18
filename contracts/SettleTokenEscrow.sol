@@ -306,14 +306,14 @@ contract SettleTokenEscrow is AccessControl
     *   down to our web3js front end and display them based on the connected wallet's involvement
     */
 
-    function get_escrow (uint256 index) public view returns (Settlement memory)
+    function get_escrow (uint256 index) public view returns (Escrow memory)
     {
-        return settlements[index];
+        return escrows[index];
     }
 
     function get_num_escrows() public view returns (uint256)
     {
-        return settlements.length;
+        return escrows.length;
     }
 
 }
