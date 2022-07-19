@@ -32,7 +32,6 @@ contract SettleTokenSettlement is AccessControl
     
     bytes32 public constant REFUND = keccak256("refund");
     bytes32 public constant RELEASE = keccak256("release");
-    
 
     /*
     *   I wanted to demonstrate some mitigating factors in this contract. So let's enable a flag that will specify the contract
@@ -147,7 +146,7 @@ contract SettleTokenSettlement is AccessControl
         *   we have a simple life and can use basic mathematical operators.
         */
         
-        require(_amount / fee * 100 > 0, "Settle It: Fee earned by the settlement contract must be material.");
+        require(_amount * fee / 100 > 0, "Settle It: Fee earned by the settlement contract must be material.");
 
         _create_settlement(_receiver, _sender, _releaser, _amount, _token, _expiry_block, _expiry_action);
     }
@@ -169,7 +168,7 @@ contract SettleTokenSettlement is AccessControl
 
     function release_settlement(uint32 _settlement_id) external
     {
-        Settlement memory _settlement = settlements[_settlement_id];
+        Settlement storage _settlement = settlements[_settlement_id];
 
         require(_settlement.releaser == msg.sender, "Settle It: Caller is not the releaser of this settlement."); //Obviously only the releaser should be allowed to release settlements
         require(_settlement.funds_deposited == true, "Settle It: Settlement must be funded to be released.");    //The settlement must have had the funds deposited before it can be released
@@ -186,7 +185,7 @@ contract SettleTokenSettlement is AccessControl
     *   not externally. In this case, the release_settlement function calls it once all checks are passed.
     */
 
-    function _release_settlement(Settlement memory _settlement) internal 
+    function _release_settlement(Settlement storage _settlement) internal 
     {
         //Set released to true - once true the release and refund functionn cannot be called again (this avoids reentrancy)
         _settlement.released = true; 
@@ -204,7 +203,7 @@ contract SettleTokenSettlement is AccessControl
     function fund_settlement(uint32 _settlement_id) external 
     {
         //Lets avoid multiple array lookups by saving the pertinent settlement in a local variable (Worth testing efficiency here!)
-        Settlement memory _settlement = settlements[_settlement_id];
+        Settlement storage _settlement = settlements[_settlement_id];
 
         //SafeTransfer will revert if this line fails
         _settlement.token.safeTransferFrom(msg.sender, address(this), _settlement.amount);
@@ -223,7 +222,7 @@ contract SettleTokenSettlement is AccessControl
 
     function refund_settlement(uint32 _settlement_id) external
     {
-        Settlement memory _settlement = settlements[_settlement_id];
+        Settlement storage _settlement = settlements[_settlement_id];
 
         require(_settlement.releaser == msg.sender, "Settle It: Caller is not the releaser of this settlement."); //Obviously only the releaser should be allowed to refund settlements
         require(_settlement.funds_deposited == true, "Settle It: Settlement must be funded to be refunded.");    //The settlement must have had the funds deposited before it can be refunded
@@ -235,7 +234,7 @@ contract SettleTokenSettlement is AccessControl
         emit Refund(_settlement_id);
     }
 
-    function _refund_settlement(Settlement memory _settlement) internal 
+    function _refund_settlement(Settlement storage _settlement) internal 
     {
         //Set released to true - once true the release and refund functionn cannot be called again (this avoids reentrancy)
         _settlement.released = true; 
@@ -259,7 +258,7 @@ contract SettleTokenSettlement is AccessControl
     function expire_settlement(uint32 _settlement_id) external
     {
         //Lets avoid multiple array lookups by saving the pertinent settlement in a local variable (Worth testing efficiency here!)
-        Settlement memory _settlement = settlements[_settlement_id];
+        Settlement storage _settlement = settlements[_settlement_id];
 
         require(block.number >= _settlement.expiry_block && _settlement.expiry_block != 0, "Settle It: This settlement has not yet expired.");
 

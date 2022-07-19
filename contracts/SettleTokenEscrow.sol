@@ -146,7 +146,7 @@ contract SettleTokenEscrow is AccessControl
         *   we have a simple life and can use basic mathematical operators.
         */
         
-        require(_amount / fee * 100 > 0, "SettleEscrow: Fee earned by the escrow contract must be material.");
+        require(_amount * fee / 100 > 0, "SettleEscrow: Fee earned by the escrow contract must be material.");
 
         _create_escrow(_receiver, _sender, _releaser, _amount, _token, _expiry_block, _expiry_action);
     }
@@ -168,7 +168,7 @@ contract SettleTokenEscrow is AccessControl
 
     function release_escrow(uint32 _escrow_id) external
     {
-        Escrow memory _escrow = escrows[_escrow_id];
+        Escrow storage _escrow = escrows[_escrow_id];
 
         require(_escrow.releaser == msg.sender, "SettleEscrow: Caller is not the releaser of this escrow."); //Obviously only the releaser should be allowed to release escrows
         require(_escrow.funds_deposited == true, "SettleEscrow: Escrow must be funded to be released.");    //The escrow must have had the funds deposited before it can be released
@@ -185,7 +185,7 @@ contract SettleTokenEscrow is AccessControl
     *   not externally. In this case, the release_escrow function calls it once all checks are passed.
     */
 
-    function _release_escrow(Escrow memory _escrow) internal 
+    function _release_escrow(Escrow storage _escrow) internal 
     {
         //Set released to true - once true the release and refund functionn cannot be called again (this avoids reentrancy)
         _escrow.released = true; 
@@ -203,7 +203,7 @@ contract SettleTokenEscrow is AccessControl
     function fund_escrow(uint32 _escrow_id) external 
     {
         //Lets avoid multiple array lookups by saving the pertinent escrow in a local variable (Worth testing efficiency here!)
-        Escrow memory _escrow = escrows[_escrow_id];
+        Escrow storage _escrow = escrows[_escrow_id];
 
         //SafeTransfer will revert if this line fails
         _escrow.token.safeTransferFrom(msg.sender, address(this), _escrow.amount);
@@ -222,7 +222,7 @@ contract SettleTokenEscrow is AccessControl
 
     function refund_escrow(uint32 _escrow_id) external
     {
-        Escrow memory _escrow = escrows[_escrow_id];
+        Escrow storage _escrow = escrows[_escrow_id];
 
         require(_escrow.releaser == msg.sender, "SettleEscrow: Caller is not the releaser of this escrow."); //Obviously only the releaser should be allowed to refund escrows
         require(_escrow.funds_deposited == true, "SettleEscrow: Escrow must be funded to be refunded.");    //The escrow must have had the funds deposited before it can be refunded
@@ -234,7 +234,7 @@ contract SettleTokenEscrow is AccessControl
         emit Refund(_escrow_id);
     }
 
-    function _refund_escrow(Escrow memory _escrow) internal 
+    function _refund_escrow(Escrow storage _escrow) internal 
     {
         //Set released to true - once true the release and refund functionn cannot be called again (this avoids reentrancy)
         _escrow.released = true; 
@@ -258,7 +258,7 @@ contract SettleTokenEscrow is AccessControl
     function expire_escrow(uint32 _escrow_id) external
     {
         //Lets avoid multiple array lookups by saving the pertinent escrow in a local variable (Worth testing efficiency here!)
-        Escrow memory _escrow = escrows[_escrow_id];
+        Escrow storage _escrow = escrows[_escrow_id];
 
         require(block.number >= _escrow.expiry_block && _escrow.expiry_block != 0, "SettleEscrow: This escrow has not yet expired.");
 
