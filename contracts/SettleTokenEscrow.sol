@@ -15,7 +15,7 @@ contract SettleTokenEscrow is AccessControl
     event Release(uint32 escrow_id);
     event Refund(uint32 escrow_id);
     event Funded(uint32 escrow_id, IERC20 token, uint256 amount);
-    event CreateEscrow(address receiver, address sender, address releaser, uint256 amount, IERC20 token, uint256 _expiry_block, bytes32 _expiry_action);
+    event CreateEscrow(address receiver, address sender, address releaser, uint256 amount, IERC20 token, uint256 _expiry_block, Action _expiry_action);
 
     /*
     *   Specify an ADMIN, and keccak256 it, so that it fits within a bytes32 datatype. This isn't a cryptographic technique
@@ -26,12 +26,14 @@ contract SettleTokenEscrow is AccessControl
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
 
     /*
-    *   Specify refund and release types and standardize them into bytes32 hex arrays
-    *   This is so we can easily parse them using bytes32 and have other standardized actions in the future maybe
+    *   Specify refund and release types and standardize them into Enums for efficiency
+    *   Enum could be scaled to accept various other actions in future revisions
     */
 
     bytes32 public constant REFUND = keccak256("refund");
     bytes32 public constant RELEASE = keccak256("release");
+
+    enum Action {REFUND, RELEASE}
 
     /*
     *   I wanted to demonstrate some mitigating factors in this contract. So let's enable a flag that will specify the contract
@@ -69,7 +71,7 @@ contract SettleTokenEscrow is AccessControl
         uint256 amount;         //Amount of the token
         IERC20 token;           //Which token is being used in the escrow
         uint256 expiry_block;   //The block at which the escrow can be finalised manually
-        bytes32 expiry_action;  //The action which is taken if the escrow expires RELEASE or REFUND.
+        Action expiry_action;  //The action which is taken if the escrow expires RELEASE or REFUND.
     }
 
     /*
@@ -122,7 +124,7 @@ contract SettleTokenEscrow is AccessControl
     *   Actually, the receiver could even be the burn address, or the releaser could be either an address a multi-signatory smart-contract 
     *   The sky is the limit here and it is intentionally general.
     */
-    function create_escrow (address _receiver, address _sender, address _releaser, uint256 _amount, IERC20 _token, uint256 _expiry_block, bytes32 _expiry_action) external
+    function create_escrow (address _receiver, address _sender, address _releaser, uint256 _amount, IERC20 _token, uint256 _expiry_block, Action _expiry_action) external
     {
         /*
         *   You shouldn't be able to create an escrow thate expires in the past.
@@ -133,7 +135,7 @@ contract SettleTokenEscrow is AccessControl
         *   Escrows that expire must take specific action with the funds
         */
 
-        require(_expiry_block == 0 || _expiry_action == RELEASE || _expiry_action == REFUND, "SettleEscrow: Expired escrows must take specific action (refund or release) with the funds");
+        require(_expiry_block == 0 || _expiry_action == Action.RELEASE || _expiry_action == Action.REFUND, "SettleEscrow: Expired escrows must take specific action (refund or release) with the funds");
 
         /*
         *   You shouldn't be able to escrow 0 Tokens.
@@ -151,7 +153,7 @@ contract SettleTokenEscrow is AccessControl
         _create_escrow(_receiver, _sender, _releaser, _amount, _token, _expiry_block, _expiry_action);
     }
 
-    function _create_escrow (address _receiver, address _sender, address _releaser, uint256 _amount, IERC20 _token, uint256 _expiry_block, bytes32 _expiry_action) internal
+    function _create_escrow (address _receiver, address _sender, address _releaser, uint256 _amount, IERC20 _token, uint256 _expiry_block, Action _expiry_action) internal
     {
         Escrow memory escrow = Escrow(false, false, _receiver, _sender, _releaser, _amount, _token, _expiry_block, _expiry_action); //Create the escrow object
 
@@ -263,7 +265,7 @@ contract SettleTokenEscrow is AccessControl
         require(block.number >= _escrow.expiry_block && _escrow.expiry_block != 0, "SettleEscrow: This escrow has not yet expired.");
 
         //We can call the same external release function here if the action on expiry is to release the funds
-        if(_escrow.expiry_action == RELEASE)
+        if(_escrow.expiry_action == Action.RELEASE)
         {
             require(_escrow.funds_deposited == true, "SettleEscrow: Escrow must be funded to be refunded.");    //The escrow must have had the funds deposited before it can be refunded
             require(_escrow.released == false, "SettleEscrow: Escrow is already released."); //I like to avoid shorthand here for readability. On a compiler level, I believe it ends up the same
@@ -272,7 +274,7 @@ contract SettleTokenEscrow is AccessControl
         }
 
         //We can call the same external refund function if the action on expiry is to refund the funds
-        else if(_escrow.expiry_action == REFUND)
+        else if(_escrow.expiry_action == Action.REFUND)
         {
             require(_escrow.funds_deposited == true, "SettleEscrow: Escrow must be funded to be refunded.");    //The escrow must have had the funds deposited before it can be refunded
             require(_escrow.released == false, "SettleEscrow: Escrow is already released."); //I like to avoid shorthand here for readability. On a compiler level, I believe it ends up the same
