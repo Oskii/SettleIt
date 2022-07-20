@@ -207,6 +207,9 @@ contract SettleTokenSettlement is AccessControl
         //SafeTransfer will revert if this line fails
         _settlement.token.safeTransferFrom(msg.sender, address(this), _settlement.amount);
 
+        //Once safe transfer is complete, we are sure the funds are received and we can approve the releaser
+        _settlement.token.approve(address(this), _settlement.amount);
+
         //Now release and refund become possible
         _settlement.funds_deposited = true;
 

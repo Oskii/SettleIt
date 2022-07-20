@@ -207,6 +207,9 @@ contract SettleTokenEscrow is AccessControl
         //SafeTransfer will revert if this line fails
         _escrow.token.safeTransferFrom(msg.sender, address(this), _escrow.amount);
 
+        //Once safe transfer is complete, we are sure the funds are received and we can approve the releaser
+        _escrow.token.approve(address(this), _escrow.amount);
+
         //Now release and refund become possible
         _escrow.funds_deposited = true;
 
