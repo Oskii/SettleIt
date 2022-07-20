@@ -30,9 +30,6 @@ contract SettleTokenEscrow is AccessControl
     *   Enum could be scaled to accept various other actions in future revisions
     */
 
-    bytes32 public constant REFUND = keccak256("refund");
-    bytes32 public constant RELEASE = keccak256("release");
-
     enum Action {REFUND, RELEASE}
 
     /*

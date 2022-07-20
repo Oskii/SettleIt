@@ -25,13 +25,10 @@ contract SettleTokenSettlement is AccessControl
 
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
     
-    /*
-    *   Specify refund and release types and standardize them into bytes32 hex arrays
-    *   This is so we can easily parse them using bytes32 and have other standardized actions in the future maybe
+     /*
+    *   Specify refund and release types and standardize them into Enums for efficiency
+    *   Enum could be scaled to accept various other actions in future revisions
     */
-    
-    bytes32 public constant REFUND = keccak256("refund");
-    bytes32 public constant RELEASE = keccak256("release");
 
     enum Action {REFUND, RELEASE}
 
